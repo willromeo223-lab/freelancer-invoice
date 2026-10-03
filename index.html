@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231E4D3A'/%3E%3Cpath d='M8 23V9h3.2l4.8 9.2L20.8 9H24v14h-2.6v-8.7L17.2 23h-2.4l-4.2-8.7V23H8z' fill='%23FFFCF7'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --desk: #EFECE4;
+    --sheet: #FFFCF7;
+    --ink: #1A1916;
+    --secondary: #6E6A62;
+    --line: #E3DFD4;
+    --accent: #1E4D3A;
+    --pine: var(--accent);
+    --pine-deep: var(--accent);
+    --muted: var(--secondary);
+    --line-strong: var(--line);
+    --paper: var(--desk);
+    --card: var(--sheet);
+    --field: var(--sheet);
+    --gold: var(--secondary);
+    --danger: var(--ink);
+    --shadow: 0 16px 40px rgba(26, 25, 22, 0.08);
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--desk);
+    min-height: 100vh;
+  }
+
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px 8px;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  .brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .brand h1 {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  .brand p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .saved {
+    font-size: 12.5px;
+    color: var(--muted);
+    min-width: 4.5em;
+    text-align: right;
+  }
+  .saved.on { color: var(--pine); }
+
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 10px 16px;
+    background: transparent;
+    line-height: 1;
+  }
+  .btn:focus-visible, .icon-btn:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgba(30, 77, 58, 0.35);
+    outline-offset: 1px;
+  }
+  .btn-ghost { border-color: var(--line-strong); background: transparent; }
+  .btn-ghost:hover { background: rgba(255, 255, 255, 0.7); }
+  .btn-primary { background: var(--accent); color: var(--sheet); }
+  .btn-primary:hover { background: var(--pine-deep); }
+
+  .layout {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 12px 22px 40px;
+    display: grid;
+    grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .editor {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 8px 16px 18px;
+    max-height: calc(100vh - 96px);
+    overflow: auto;
+  }
+  .section { padding: 14px 0 4px; border-top: 1px solid var(--line); }
+  .section:first-child { border-top: 0; }
+  .section h2 {
+    margin: 0 0 10px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 650;
+  }
+  label { display: block; font-size: 12.5px; color: var(--muted); margin: 8px 0 4px; }
+  input[type="text"], input[type="email"], input[type="number"], input[type="date"], textarea {
+    width: 100%;
+    background: var(--field);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 9px 10px;
+  }
+  textarea { resize: vertical; min-height: 72px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stack-3 { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 10px; }
+
+  .item-head, .item-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px 78px 76px 28px;
+    gap: 6px;
+    align-items: center;
+  }
+  .line-amt {
+    font-size: 12.5px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .item-head {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .item-row { margin-bottom: 6px; }
+  .item-row input { padding: 8px 8px; }
+  .icon-btn {
+    width: 28px;
+    height: 34px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 8px;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .icon-btn:hover { background: var(--desk); color: var(--ink); }
+  .icon-btn[disabled] { opacity: 0.35; pointer-events: none; }
+  .add-line {
+    margin-top: 4px;
+    width: 100%;
+    border: 1px dashed var(--line-strong);
+    background: transparent;
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--pine);
+  }
+  .add-line:hover { background: var(--desk); }
+  .tax-row { max-width: 140px; }
+
+  .preview-col { min-width: 0; }
+  .preview-kicker {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px 2px;
+  }
+  .sheet-wrap { overflow: auto; }
+  .sheet {
+    background: var(--sheet);
+    color: var(--ink);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    padding: 42px 44px 36px;
+    min-height: 720px;
+    position: relative;
+  }
+  .sheet::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 4px 4px 0 0;
+  }
+
+  .inv-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  .who { display: flex; gap: 14px; min-width: 0; }
+  .mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--sheet);
+    display: grid;
+    place-items: center;
+    font-family: var(--sans);
+    font-size: 16px;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  .biz-name {
+    font-family: var(--serif);
+    font-size: 26px;
+    line-height: 1.15;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .biz-name.placeholder, .muted-line { color: var(--secondary); }
+  .fine { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; white-space: pre-line; }
+  .inv-meta { text-align: right; flex-shrink: 0; }
+  .inv-kicker {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    color: var(--pine);
+    font-weight: 650;
+  }
+  .inv-no {
+    margin: 4px 0 8px;
+    font-family: var(--sans);
+    font-weight: 650;
+    font-size: 22px;
+  }
+  .meta-line { margin: 0; font-size: 13px; color: var(--muted); }
+  .meta-line strong { color: var(--ink); font-weight: 600; }
+  .chip {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--desk);
+    color: var(--accent);
+  }
+  .chip.overdue { background: var(--desk); color: var(--ink); border: 1px solid var(--ink); }
+
+  .bill {
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+  .bill h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .client-name { margin: 0 0 4px; font-size: 16px; font-weight: 650; }
+
+  table.lines {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 26px;
+  }
+  .lines th {
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 650;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .lines td {
+    padding: 11px 8px 11px 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    font-size: 14.5px;
+  }
+  .lines th.num, .lines td.num { text-align: right; padding-right: 0; font-variant-numeric: tabular-nums; }
+  .lines td.desc { padding-right: 12px; }
+
+  .totals {
+    margin-left: auto;
+    margin-top: 8px;
+    width: min(280px, 100%);
+  }
+  .totals div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 6px 0;
+    font-size: 14.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .totals .grand {
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 2px solid var(--accent);
+    font-family: var(--serif);
+    font-size: 22px;
+  }
+  .totals .grand span:last-child { color: var(--accent); }
+
+  .notes { margin-top: 36px; }
+  .notes h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .notes p { margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.5; color: var(--ink); }
+  .thanks {
+    margin-top: 28px;
+    font-family: var(--sans);
+    color: var(--secondary);
+    font-size: 14px;
+  }
+
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; }
+    .editor { max-height: none; }
+    .topbar { align-items: flex-start; }
+  }
+  @media (max-width: 640px) {
+    .topbar, .layout { padding-left: 14px; padding-right: 14px; }
+    .actions { flex-wrap: wrap; justify-content: flex-end; }
+    .pair, .stack-3 { grid-template-columns: 1fr; }
+    .sheet { padding: 32px 18px 24px; min-height: 0; }
+    .inv-top { flex-direction: column; }
+    .inv-meta { text-align: left; }
+    .biz-name { font-size: 22px; }
+  }
+
+  @media print {
+    @page { size: letter; margin: 0.55in; }
+    html, body { background: white !important; }
+    .topbar, .editor, .preview-kicker { display: none !important; }
+    .layout { display: block; max-width: none; padding: 0; margin: 0; }
+    .preview-col, .sheet-wrap { overflow: visible; }
+    .sheet {
+      box-shadow: none;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      min-height: 0;
+    }
+    .sheet::before {
+      position: static;
+      display: block;
+      height: 6px;
+      margin: -0.15in -0.05in 18px;
+      border-radius: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .mark {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Invoice</h1>
+      <p>Edits save in this browser. Nothing is uploaded.</p>
+    </div>
+    <div class="actions">
+      <span class="saved" id="saved" aria-live="polite"></span>
+      <button type="button" class="btn btn-ghost" id="resetBtn">Reset example</button>
+      <button type="button" class="btn btn-ghost" id="saveBtn">Save</button>
+      <button type="button" class="btn btn-primary" id="printBtn">Save as PDF</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <form class="editor" id="editor" autocomplete="off">
+      <section class="section">
+        <h2>Your business</h2>
+        <label for="businessName">Your name</label>
+        <input id="businessName" type="text" data-field="businessName">
+        <label for="businessEmail">Your email</label>
+        <input id="businessEmail" type="email" data-field="businessEmail">
+        <label for="businessAddress">Address</label>
+        <textarea id="businessAddress" rows="3" data-field="businessAddress"></textarea>
+      </section>
+
+      <section class="section">
+        <h2>Client</h2>
+        <label for="clientName">Client name</label>
+        <input id="clientName" type="text" data-field="clientName">
+        <label for="clientEmail">Client email</label>
+        <input id="clientEmail" type="email" data-field="clientEmail">
+        <label for="clientAddress">Address</label>
+        <textarea id="clientAddress" rows="3" data-field="clientAddress"></textarea>
+      </section>
+
+      <section class="section">
+        <h2>Invoice</h2>
+        <div class="stack-3">
+          <div>
+            <label for="invoiceNumber">Invoice number</label>
+            <input id="invoiceNumber" type="text" data-field="invoiceNumber">
+          </div>
+          <div>
+            <label for="issueDate">Date</label>
+            <input id="issueDate" type="date" data-field="issueDate">
+          </div>
+          <div>
+            <label for="dueDate">Due date</label>
+            <input id="dueDate" type="date" data-field="dueDate">
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Line items</h2>
+        <div class="item-head">
+          <span>Description</span><span>Quantity</span><span>Rate</span><span>Amount</span><span></span>
+        </div>
+        <div id="items"></div>
+        <button type="button" class="add-line" id="addItem">Add line</button>
+      </section>
+
+      <section class="section">
+        <h2>Tax and notes</h2>
+        <div class="tax-row">
+          <label for="taxPercent">Tax</label>
+          <input id="taxPercent" type="number" min="0" step="0.01" inputmode="decimal" data-field="taxPercent" placeholder="0">
+        </div>
+        <label for="notes">Notes</label>
+        <textarea id="notes" rows="4" data-field="notes"></textarea>
+      </section>
+    </form>
+
+    <div class="preview-col">
+      <p class="preview-kicker">Preview</p>
+      <div class="sheet-wrap">
+        <article class="sheet" id="sheet" aria-label="Invoice preview"></article>
+      </div>
+    </div>
+  </main>
+
+<script>
+(function () {
+  var KEY = "freelancer-invoice-draft-v1";
+  var money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  var savedTimer = null;
+
+  function isoDate(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+
+  function todayISO() { return isoDate(new Date()); }
+
+  function exampleState() {
+    var issue = new Date();
+    var due = new Date(issue.getFullYear(), issue.getMonth(), issue.getDate() + 14);
+    return {
+      businessName: "Example Studio",
+      businessEmail: "hello@example.com",
+      businessAddress: "123 Example Street\nChicago, IL 60622",
+      clientName: "Sample Client LLC",
+      clientEmail: "billing@client.example",
+      clientAddress: "500 Sample Avenue, Suite 12\nAustin, TX 78701",
+      invoiceNumber: "INV-1001",
+      issueDate: isoDate(issue),
+      dueDate: isoDate(due),
+      taxPercent: "8.25",
+      notes: "Example invoice — replace every field with your own. Payment is due within 14 days of the issue date. Thank you.",
+      items: [
+        { description: "Logo and brand system", qty: "1", rate: "1800" },
+        { description: "Marketing site, five pages", qty: "1", rate: "3200" },
+        { description: "Consulting hours", qty: "6", rate: "125" }
+      ]
+    };
+  }
+
+  function num(v) {
+    if (v === "" || v == null) return 0;
+    var n = Number(v);
+    return isFinite(n) ? n : 0;
+  }
+
+  function blankItem() {
+    return { description: "", qty: "1", rate: "0" };
+  }
+
+  function normalize(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var items = Array.isArray(raw.items) ? raw.items : [];
+    items = items.map(function (it) {
+      it = it || {};
+      return {
+        description: String(it.description || ""),
+        qty: it.qty === 0 || it.qty ? String(it.qty) : "1",
+        rate: it.rate === 0 || it.rate ? String(it.rate) : "0"
+      };
+    });
+    if (!items.length) items = [blankItem()];
+    return {
+      businessName: String(raw.businessName || ""),
+      businessEmail: String(raw.businessEmail || ""),
+      businessAddress: String(raw.businessAddress || ""),
+      clientName: String(raw.clientName || ""),
+      clientEmail: String(raw.clientEmail || ""),
+      clientAddress: String(raw.clientAddress || ""),
+      invoiceNumber: String(raw.invoiceNumber || ""),
+      issueDate: String(raw.issueDate || ""),
+      dueDate: String(raw.dueDate || ""),
+      taxPercent: raw.taxPercent === 0 || raw.taxPercent ? String(raw.taxPercent) : "",
+      notes: String(raw.notes || ""),
+      items: items
+    };
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return null;
+      return normalize(JSON.parse(raw));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function persist(state) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      var el = document.getElementById("saved");
+      el.textContent = "Saved";
+      el.className = "saved on";
+      clearTimeout(savedTimer);
+      savedTimer = setTimeout(function () {
+        el.className = "saved";
+      }, 1600);
+    } catch (e) {
+      document.getElementById("saved").textContent = "Not saved";
+    }
+  }
+
+  var state = load() || exampleState();
+
+  function field(id) { return document.getElementById(id); }
+
+  function writeForm(s) {
+    ["businessName","businessEmail","businessAddress","clientName","clientEmail","clientAddress","invoiceNumber","issueDate","dueDate","taxPercent","notes"].forEach(function (k) {
+      field(k).value = s[k] || "";
+    });
+    renderItems(s.items);
+  }
+
+  function renderItems(items) {
+    var box = document.getElementById("items");
+    box.innerHTML = "";
+    items.forEach(function (it, i) {
+      var row = document.createElement("div");
+      row.className = "item-row";
+      row.innerHTML =
+        '<input type="text" class="desc" aria-label="Description" value="">' +
+        '<input type="number" class="qty" min="0" step="0.25" inputmode="decimal" aria-label="Quantity" value="">' +
+        '<input type="number" class="rate" min="0" step="0.01" inputmode="decimal" aria-label="Rate" value="">' +
+        '<span class="line-amt" aria-label="Amount"></span>' +
+        '<button type="button" class="icon-btn remove" aria-label="Remove line">&times;</button>';
+      row.querySelector(".desc").value = it.description;
+      row.querySelector(".qty").value = it.qty;
+      row.querySelector(".rate").value = it.rate;
+      if (items.length === 1) row.querySelector(".remove").disabled = true;
+      box.appendChild(row);
+    });
+  }
+
+  function readState() {
+    var items = [];
+    document.querySelectorAll("#items .item-row").forEach(function (row) {
+      items.push({
+        description: row.querySelector(".desc").value,
+        qty: row.querySelector(".qty").value,
+        rate: row.querySelector(".rate").value
+      });
+    });
+    if (!items.length) items = [blankItem()];
+    return {
+      businessName: field("businessName").value,
+      businessEmail: field("businessEmail").value,
+      businessAddress: field("businessAddress").value,
+      clientName: field("clientName").value,
+      clientEmail: field("clientEmail").value,
+      clientAddress: field("clientAddress").value,
+      invoiceNumber: field("invoiceNumber").value,
+      issueDate: field("issueDate").value,
+      dueDate: field("dueDate").value,
+      taxPercent: field("taxPercent").value,
+      notes: field("notes").value,
+      items: items
+    };
+  }
+
+  function initials(name) {
+    var parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "IN";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function formatLong(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "—";
+    var p = iso.split("-");
+    var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    return dt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function addFine(parent, text) {
+    if (!String(text || "").trim()) return;
+    parent.appendChild(el("p", "fine", text));
+  }
+
+  function renderPreview(s) {
+    var sheet = document.getElementById("sheet");
+    sheet.innerHTML = "";
+
+    var top = el("div", "inv-top");
+    var who = el("div", "who");
+    who.appendChild(el("div", "mark", initials(s.businessName)));
+    var whoText = el("div");
+    var nameCls = s.businessName.trim() ? "biz-name" : "biz-name placeholder";
+    whoText.appendChild(el("h2", nameCls, s.businessName.trim() || "Your business"));
+    addFine(whoText, s.businessEmail);
+    addFine(whoText, s.businessAddress);
+    who.appendChild(whoText);
+
+    var meta = el("div", "inv-meta");
+    meta.appendChild(el("p", "inv-kicker", "INVOICE"));
+    meta.appendChild(el("p", "inv-no", s.invoiceNumber.trim() || "—"));
+    var issued = el("p", "meta-line");
+    issued.appendChild(document.createTextNode("Issued "));
+    issued.appendChild(el("strong", null, formatLong(s.issueDate)));
+    var due = el("p", "meta-line");
+    due.appendChild(document.createTextNode("Due "));
+    due.appendChild(el("strong", null, formatLong(s.dueDate)));
+    meta.appendChild(issued);
+    meta.appendChild(due);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s.dueDate)) {
+      var overdue = s.dueDate < todayISO();
+      meta.appendChild(el("span", overdue ? "chip overdue" : "chip", overdue ? "Overdue" : "Open"));
+    }
+    top.appendChild(who);
+    top.appendChild(meta);
+    sheet.appendChild(top);
+
+    var bill = el("div", "bill");
+    bill.appendChild(el("h3", null, "Bill to"));
+    var clientCls = s.clientName.trim() ? "client-name" : "client-name muted-line";
+    bill.appendChild(el("p", clientCls, s.clientName.trim() || "Client name"));
+    addFine(bill, s.clientEmail);
+    addFine(bill, s.clientAddress);
+    sheet.appendChild(bill);
+
+    var table = document.createElement("table");
+    table.className = "lines";
+    var thead = document.createElement("thead");
+    var hr = document.createElement("tr");
+    ["Description", "Quantity", "Rate", "Amount"].forEach(function (label, idx) {
+      hr.appendChild(el("th", idx ? "num" : null, label));
+    });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    var tbody = document.createElement("tbody");
+    var subtotal = 0;
+    s.items.forEach(function (it) {
+      var qty = num(it.qty);
+      var rate = num(it.rate);
+      var amount = qty * rate;
+      subtotal += amount;
+      var tr = document.createElement("tr");
+      var desc = el("td", "desc", it.description.trim() || "—");
+      var q = el("td", "num", String(it.qty === "" ? "0" : it.qty));
+      var r = el("td", "num", money.format(rate));
+      var a = el("td", "num", money.format(amount));
+      tr.appendChild(desc);
+      tr.appendChild(q);
+      tr.appendChild(r);
+      tr.appendChild(a);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    sheet.appendChild(table);
+
+    var taxPct = num(s.taxPercent);
+    var tax = subtotal * (taxPct / 100);
+    var total = subtotal + tax;
+    var totals = el("div", "totals");
+    function row(label, value, cls) {
+      var d = el("div", cls || null);
+      d.appendChild(el("span", null, label));
+      d.appendChild(el("span", null, value));
+      totals.appendChild(d);
+    }
+    row("Subtotal", money.format(subtotal));
+    var taxLabel = "Tax" + (String(s.taxPercent).trim() ? " (" + trimPct(s.taxPercent) + "%)" : "");
+    row(taxLabel, money.format(tax));
+    row("Total", money.format(total), "grand");
+    sheet.appendChild(totals);
+
+    if (s.notes.trim()) {
+      var notes = el("div", "notes");
+      notes.appendChild(el("h3", null, "Notes"));
+      notes.appendChild(el("p", null, s.notes));
+      sheet.appendChild(notes);
+    }
+    sheet.appendChild(el("p", "thanks", "Thank you for your business."));
+  }
+
+  function trimPct(v) {
+    var n = num(v);
+    return String(Math.round(n * 1000) / 1000);
+  }
+
+  function paintAmounts() {
+    document.querySelectorAll("#items .item-row").forEach(function (row) {
+      var amount = num(row.querySelector(".qty").value) * num(row.querySelector(".rate").value);
+      row.querySelector(".line-amt").textContent = money.format(amount);
+    });
+  }
+
+  function sync(save) {
+    state = readState();
+    paintAmounts();
+    renderPreview(state);
+    if (save) persist(state);
+  }
+
+  document.getElementById("editor").addEventListener("input", function () {
+    sync(true);
+  });
+
+  document.getElementById("items").addEventListener("click", function (e) {
+    var btn = e.target.closest(".remove");
+    if (!btn || btn.disabled) return;
+    var row = btn.closest(".item-row");
+    row.parentNode.removeChild(row);
+    var rows = document.querySelectorAll("#items .item-row");
+    if (rows.length === 1) rows[0].querySelector(".remove").disabled = true;
+    sync(true);
+  });
+
+  document.getElementById("addItem").addEventListener("click", function () {
+    state = readState();
+    state.items.push(blankItem());
+    renderItems(state.items);
+    sync(true);
+    var descs = document.querySelectorAll("#items .desc");
+    descs[descs.length - 1].focus();
+  });
+
+  document.getElementById("editor").addEventListener("submit", function (e) {
+    e.preventDefault();
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", function () {
+    sync(true);
+  });
+
+  document.getElementById("printBtn").addEventListener("click", function () {
+    sync(true);
+    window.print();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("Replace this draft with the example invoice?")) return;
+    state = exampleState();
+    writeForm(state);
+    renderPreview(state);
+    persist(state);
+  });
+
+  document.getElementById("editor").addEventListener("wheel", function (e) {
+    if (e.target && e.target.type === "number") e.preventDefault();
+  }, { passive: false });
+
+  writeForm(state);
+  paintAmounts();
+  renderPreview(state);
+  if (!load()) persist(state);
+})();
+</script>
+</body>
+</html>
